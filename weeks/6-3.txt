@@ -1,0 +1,6 @@
+db.companies.aggregate( [
+	{ $match: { "funding_rounds.raised_amount": { $ne: null }, "founded_year": 2004 } },
+	{ $project : { name : "$name", _id: 0, av_fund:{ $avg: "$funding_rounds.raised_amount" }, "numOfRounds": { $size: "$funding_rounds" } } },   
+	{ $match: { "numOfRounds": { $gte: 5 } } },
+	{ $sort: { av_fund: 1 } }
+] )

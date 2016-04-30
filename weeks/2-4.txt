@@ -1,0 +1,23 @@
+db.movieDetails.find(
+	{
+		$and: 
+		[
+			{ 
+				genres: 
+					{
+						$size: 2
+					}
+			},
+			{ 
+			genres: 
+				{
+					$all: ["Comedy", "Crime"]
+				}
+			}
+		]
+	},
+	{
+		genres: 1,
+		_id: 0
+	}
+).count()	
