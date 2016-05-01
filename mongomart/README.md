@@ -15,3 +15,9 @@ mongoimport -d mongomart -c cart data/cart.json
 ```sh
 node mongomart.js
 ```
+
+### Lab 2
+Create a single text index on "title", "slogan", and "description" in the "item" collection
+```sh
+db.item.createIndex({ title: "text", slogan: "text", description: "text" })
+```

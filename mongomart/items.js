@@ -53,19 +53,54 @@ function ItemDAO(database) {
         */
 
         var categories = [];
-        var category = {
-            _id: "All",
-            num: 9999
-        };
+        var collection = this.db.collection("item");
+        collection.aggregate([
+            {
+                $project : { 
+                    "_id" : "$id", 
+                    "category": "$category", 
+                    "title": "$title" 
+                }
+            },
+            { 
+                $group: {
+                    _id: { "category": "$category" },
+                    items: { $push: "$title" },
+                } 
+            },
+            { 
+                $project : { 
+                    "_id" : 1, 
+                    "num": { $size: "$items" } 
+                }
+            },
+            { 
+                $sort : { 
+                    _id : 1 
+                } 
+            }
+            ], function(err, result) {
+                assert.equal(null, err);
+                var allNum = 0;
 
-        categories.push(category)
+                categories.push({
+                    _id: "All",
+                    num: 0 
+                });
 
-        // TODO-lab1A Replace all code above (in this method).
+                result.forEach(function(item) {
+                    categories.push({
+                        _id: item["_id"].category,
+                        num: item.num
+                    });
 
-        // TODO Include the following line in the appropriate
-        // place within your code to pass the categories array to the
-        // callback.
-        callback(categories);
+                    allNum += item.num;
+                });
+
+                categories[0].num = allNum;
+
+                callback(categories);
+            });
     }
 
 
@@ -94,25 +129,36 @@ function ItemDAO(database) {
          *
          */
 
-        var pageItem = this.createDummyItem();
-        var pageItems = [];
-        for (var i=0; i<5; i++) {
-            pageItems.push(pageItem);
-        }
+        // var pageItem = this.createDummyItem();
+        // var pageItems = [];
+        // for (var i=0; i<5; i++) {
+        //     pageItems.push(pageItem);
+        // }
+
+        this.db.collection("item").aggregate([
+            { $match : { "category" : category}},
+            { $sort : { "_id" : 1}},
+            { $skip : page * itemsPerPage },
+            { $limit : itemsPerPage}
+        ],
+        function(err, pageItems) {
+            assert.equal(null, err);
+            callback(pageItems);            
+        });
 
         // TODO-lab1B Replace all code above (in this method).
 
         // TODO Include the following line in the appropriate
         // place within your code to pass the items for the selected page
         // to the callback.
-        callback(pageItems);
+        // callback(pageItems); 
     }
 
 
     this.getNumItems = function(category, callback) {
         "use strict";
 
-        var numItems = 0;
+        // var numItems = 0;
 
         /*
          * TODO-lab1C:
@@ -128,10 +174,17 @@ function ItemDAO(database) {
          * of a call to the getNumItems() method.
          *
          */
+        this.db.collection("item").aggregate([
+            { $match : { "category" : category }}
+        ],
+        function(err, items) {
+            assert.equal(null, err);
+            callback(items.length);
+        });
 
          // TODO Include the following line in the appropriate
          // place within your code to pass the count to the callback.
-        callback(numItems);
+        // callback(numItems);
     }
 
 
@@ -162,25 +215,36 @@ function ItemDAO(database) {
          *
          */
 
-        var item = this.createDummyItem();
-        var items = [];
-        for (var i=0; i<5; i++) {
-            items.push(item);
-        }
+        // var item = this.createDummyItem();
+        // var items = [];
+        // for (var i=0; i<5; i++) {
+        //     items.push(item);
+        // }
+
+        this.db.collection("item").aggregate([
+            { $match : { $text: { $search: query } } },
+            { $sort : { "_id" : 1}},
+            { $skip : page * itemsPerPage },
+            { $limit : itemsPerPage}
+        ],
+        function(err, items) {
+            assert.equal(null, err);
+            callback(items);            
+        });
 
         // TODO-lab2A Replace all code above (in this method).
 
         // TODO Include the following line in the appropriate
         // place within your code to pass the items for the selected page
         // of search results to the callback.
-        callback(items);
+        // callback(items);
     }
 
 
     this.getNumSearchItems = function(query, callback) {
         "use strict";
 
-        var numItems = 0;
+        // var numItems = 0;
 
         /*
         * TODO-lab2B
@@ -195,7 +259,15 @@ function ItemDAO(database) {
         * simply do this in the mongo shell.
         */
 
-        callback(numItems);
+        this.db.collection("item").aggregate([
+            { $match : { $text: { $search: query } } }
+        ],
+        function(err, items) {
+            assert.equal(null, err);
+            callback(items.length);
+        });
+
+        // callback(numItems);
     }
 
 
